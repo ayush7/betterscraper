@@ -1,7 +1,10 @@
 from duckduckgo_search import DDGS
+from duckduckgo_search import AsyncDDGS
 import logging
 import threading
 from queue import Queue
+import asyncio
+from crawl4ai import AsyncWebCrawler
 from crawl4ai.web_crawler import WebCrawler
 
 class BasicScraper:
@@ -24,9 +27,10 @@ class BasicScraper:
             self.crawler = WebCrawler()
             self.crawler.warmup()
 
-    def scrape_url(self, url, queue):
-        result = self.crawler.run(url=url)
-        queue.put({url: result.markdown})
+    async def ascrape_url(self, url, queue):
+        async with AsyncWebCrawler(verbose=True) as crawler:
+            result = await crawler.arun(url=url)
+            queue.put({url: result.markdown})
 
     def queue_scraping(self, urls):
         logging.debug('Starting Scraping')
@@ -46,8 +50,8 @@ class BasicScraper:
 
         return json_content
 
-    def basic_text_search(self, query: str, results: int = 5):
-        logging.debug('Starting Sync Search')
+    async def abasic_text_search(self, query: str, results: int = 5):
+        logging.debug('Starting Async Search')
         sources = []
         code = 503
         try:
@@ -55,19 +59,15 @@ class BasicScraper:
                 logging.debug('Query was received')
                 code = 200
                 if len(self.whitelist) > 0:
-                    logging.debug("Whitelisting")
                     for url in self.whitelist:
                         query += " " + url
 
-                if len(self.blacklist) > 0:
-                    logging.debug('Blacklisting')
+                if len(self.blacklist) > 0 and len(self.whitelist) == 0:
                     query += " -"
                     for url in self.blacklist:
-                        query += f"{url}"
+                        query += " " + url
 
-                logging.debug(f"Final Query : {query}")
-            
-                sources = DDGS().text(query, max_results=results)
+                sources = await AsyncDDGS().atext(query, max_results=results)
             else:
                 logging.debug('Query was empty or null')
                 raise Exception('Query was empty or null')

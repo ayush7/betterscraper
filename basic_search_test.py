@@ -2,14 +2,14 @@ from basic_search import *
 import logging
 logging.basicConfig(level=logging.DEBUG)
 import json
-# query rewriter
-basicSearch = BasicScraper(blacklist=['site:instagram.com'], whitelist=[])
 
-results = basicSearch.syncBasicTextSearch("Gemini Flash 1.5", 10)
+basicSearch = BasicScraper()
 
-urls = []
+# results = basicSearch.basic_text_search("Gemini Flash 1.5", 10)
 
-for data in results['sources']:
-    urls.append(data['href'])
+urls = ["https://deepmind.google/technologies/gemini/flash/"]
 
-print(json.dumps(basicSearch.queueScraping(urls), indent=4))
+# for data in results['sources']:
+#     urls.append(data['href'])
+
+print(json.dumps(basicSearch.queue_scraping(urls)))
