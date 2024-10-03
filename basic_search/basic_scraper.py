@@ -4,6 +4,10 @@ import threading
 from queue import Queue
 from crawl4ai.web_crawler import WebCrawler
 
+from pathlib import Path 
+import os 
+import time
+
 class BasicScraper:
     
     def __init__(
@@ -24,8 +28,18 @@ class BasicScraper:
             self.crawler = WebCrawler()
             self.crawler.warmup()
 
-    def scrape_url(self, url, queue):
-        result = self.crawler.run(url=url)
+    def scrape_url(self, url, queue, logging = False, logs_dir='logs'):
+        
+        try:
+            result = self.crawler.run(url=url)
+        except Exception as e:
+            print(f'\nException in link {url}')
+            if logging == True:
+                Path(logs_dir).mkdir(parents=True, exist_ok=True)
+                timestr = time.strftime("%Y%m%d")
+                log_path = os.path.join(logs_dir,'exception_logs_scraper_'+timestr+'.txt')
+                with open(log_path,'a') as f:
+                    f.write(f'\nLink: {url}\nException: {str(e)}\n')
         queue.put({url: result.markdown})
 
     def queue_scraping(self, urls):
